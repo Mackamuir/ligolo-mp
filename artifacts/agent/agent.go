@@ -53,7 +53,12 @@ func main() {
 
 	flag.Usage = func() {}
 	var insecure = flag.Bool("insecure", false, "")
+	var serverOverride = flag.String("server", "", "")
 	flag.Parse()
+
+	if *serverOverride != "" {
+		servers = []string{*serverOverride}
+	}
 
 	var conn net.Conn
 	redirectorMap = make(map[string]relay.Redirector)
