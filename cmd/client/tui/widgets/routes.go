@@ -92,6 +92,20 @@ func (widget *RoutesWidget) SetData(data []*session.Session) {
 
 	widget.data = nil
 
+	if widget.selectedSession != nil {
+		found := false
+		for _, sess := range data {
+			if sess.ID == widget.selectedSession.ID {
+				widget.selectedSession = sess
+				found = true
+				break
+			}
+		}
+		if !found {
+			widget.selectedSession = nil
+		}
+	}
+
 	for _, session := range data {
 		for _, route := range session.Tun.Routes.All() {
 			widget.data = append(widget.data, NewRoutesWidgetElem(route, session))
@@ -106,12 +120,14 @@ func (widget *RoutesWidget) ResetSelector() {
 	if len(widget.data) > 0 {
 		row := 1
 		if widget.selectedSession != nil {
-			row = widget.FetchRow(widget.selectedSession)
+			foundRow := widget.FetchRow(widget.selectedSession)
+			if foundRow > 0 {
+				row = foundRow
+			} else {
+				widget.selectedSession = nil
+			}
 		}
-
-		if row > 0 {
-			widget.Select(row, 0)
-		}
+		widget.Select(row, 0)
 	}
 }
 

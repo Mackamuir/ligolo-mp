@@ -100,12 +100,14 @@ func (widget *SessionsWidget) ResetSelector() {
 	if len(widget.data) > 0 {
 		row := 1
 		if widget.selectedSession != nil {
-			row = widget.FetchRow(widget.selectedSession)
+			foundRow := widget.FetchRow(widget.selectedSession)
+			if foundRow > 0 {
+				row = foundRow
+			} else {
+				widget.selectedSession = nil
+			}
 		}
-
-		if row > 0 {
-			widget.Select(row, 0)
-		}
+		widget.Select(row, 0)
 	}
 }
 

@@ -43,6 +43,21 @@ func (widget *InterfacesWidget) SetData(data []*session.Session) {
 	widget.Clear()
 
 	widget.data = nil
+
+	if widget.selectedSession != nil {
+		found := false
+		for _, sess := range data {
+			if sess.ID == widget.selectedSession.ID {
+				widget.selectedSession = sess
+				found = true
+				break
+			}
+		}
+		if !found {
+			widget.selectedSession = nil
+		}
+	}
+
 	for _, session := range data {
 		for _, iface := range session.Interfaces.All() {
 			widget.data = append(widget.data, iface)
