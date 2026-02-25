@@ -67,7 +67,6 @@ func NewApp(operService *operator.OperatorService) *App {
 
 	app.SwitchToPage(app.credentials)
 
-	go app.autoRedraw()
 	go app.autoRefresh()
 
 	return app
@@ -80,14 +79,13 @@ func (app *App) Reset() {
 	app.SwitchToPage(app.credentials)
 }
 
-func (app *App) autoRedraw() {
-	tick := time.NewTicker(500 * time.Millisecond)
-	for {
-		select {
-		case <-tick.C:
-			app.Draw()
+func (app *App) queueRefresh() {
+	app.QueueUpdateDraw(func() {
+		if app.IsConnected() {
+			app.dashboard.RefreshData()
+			app.admin.RefreshData()
 		}
-	}
+	})
 }
 
 func (app *App) autoRefresh() {
@@ -95,10 +93,7 @@ func (app *App) autoRefresh() {
 	for {
 		select {
 		case <-ticker.C:
-			if app.IsConnected() {
-				app.dashboard.RefreshData()
-				app.admin.RefreshData()
-			}
+			app.queueRefresh()
 		}
 	}
 }
@@ -525,9 +520,7 @@ func (app *App) HandleOperatorEvents() {
 			return
 		}
 
-		app.dashboard.RefreshData()
-		app.admin.RefreshData()
-
+		app.queueRefresh()
 		slog.Log(context.Background(), events.EventType(event.Type).Slog(), event.Data)
 	}
 }
