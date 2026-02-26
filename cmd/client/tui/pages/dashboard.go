@@ -223,7 +223,7 @@ func (dash *DashboardPage) initSessionsWidget() {
 
 func (dash *DashboardPage) initInterfacesWidget() {
 	dash.interfaces.SetSelectedFunc(func(sess *session.Session, elem widgets.InterfacesWidgetElem) {
-		menu := modals.NewMenuModal(fmt.Sprintf("Interface - %s (%s)", elem.Name, elem.Address))
+		menu := modals.NewMenuModal(fmt.Sprintf("Interface — %s (%s)", elem.Name, elem.Address))
 		cleanup := func() {
 			dash.RemovePage(menu.GetID())
 			dash.setFocus(dash.interfaces)
