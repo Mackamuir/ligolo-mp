@@ -29,6 +29,11 @@ var (
 	}
 )
 
+func NewAddRouteFormWithCIDR(cidr string) *AddRouteForm {
+	add_route_cidr.Last = cidr
+	return NewAddRouteForm()
+}
+
 func NewAddRouteForm() *AddRouteForm {
 	form := &AddRouteForm{
 		Flex:      *tview.NewFlex(),

@@ -2,6 +2,7 @@ package pages
 
 import (
 	"fmt"
+	"net"
 	"strings"
 
 	"github.com/gdamore/tcell/v2"
@@ -59,6 +60,7 @@ func NewDashboardPage() *DashboardPage {
 	}
 
 	dash.initSessionsWidget()
+	dash.initInterfacesWidget()
 	dash.initRoutesWidget()
 	dash.initRedirectorsWidget()
 
@@ -211,6 +213,48 @@ func (dash *DashboardPage) initSessionsWidget() {
 					dash.ShowInfo("Session removed", cleanup)
 				})
 			})
+		}))
+
+		menu.SetCancelFunc(cleanup)
+
+		dash.AddPage(menu.GetID(), menu, true, true)
+	})
+}
+
+func (dash *DashboardPage) initInterfacesWidget() {
+	dash.interfaces.SetSelectedFunc(func(sess *session.Session, elem widgets.InterfacesWidgetElem) {
+		menu := modals.NewMenuModal(fmt.Sprintf("Interface - %s (%s)", elem.Name, elem.Address))
+		cleanup := func() {
+			dash.RemovePage(menu.GetID())
+			dash.setFocus(dash.interfaces)
+		}
+
+		_, network, err := net.ParseCIDR(elem.Address)
+		cidr := elem.Address
+		if err == nil {
+			cidr = network.String()
+		}
+
+		menu.AddItem(modals.NewMenuModalElem("Add route", func() {
+			route := route_forms.NewAddRouteFormWithCIDR(cidr)
+			route.SetSubmitFunc(func(routeCidr string, metric int, loopback bool) {
+				dash.DoWithLoader("Adding route...", func() {
+					err := dash.sessionAddRouteFunc(sess, routeCidr, metric, loopback)
+					if err != nil {
+						dash.RemovePage(route.GetID())
+						dash.ShowError(fmt.Sprintf("Could not add route: %s", err), cleanup)
+						return
+					}
+
+					dash.RemovePage(route.GetID())
+					dash.ShowInfo("Route added", cleanup)
+				})
+			})
+			route.SetCancelFunc(func() {
+				dash.RemovePage(route.GetID())
+				cleanup()
+			})
+			dash.AddPage(route.GetID(), route, true, true)
 		}))
 
 		menu.SetCancelFunc(cleanup)

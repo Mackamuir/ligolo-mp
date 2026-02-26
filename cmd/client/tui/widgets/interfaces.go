@@ -10,10 +10,17 @@ import (
 	"github.com/ttpreport/ligolo-mp/v2/internal/session"
 )
 
+type InterfacesWidgetElem struct {
+	Name    string
+	Address string
+}
+
 type InterfacesWidget struct {
 	*tview.Table
 	data            []protocol.NetInterface
+	displayData     []InterfacesWidgetElem
 	selectedSession *session.Session
+	selectedFunc    func(*session.Session, InterfacesWidgetElem)
 }
 
 func NewInterfacesWidget() *InterfacesWidget {
@@ -36,7 +43,18 @@ func NewInterfacesWidget() *InterfacesWidget {
 		widget.SetSelectable(false, false)
 	})
 
+	widget.Table.SetSelectedFunc(func(row, _ int) {
+		idx := row - 1
+		if idx >= 0 && idx < len(widget.displayData) && widget.selectedFunc != nil && widget.selectedSession != nil {
+			widget.selectedFunc(widget.selectedSession, widget.displayData[idx])
+		}
+	})
+
 	return widget
+}
+
+func (widget *InterfacesWidget) SetSelectedFunc(f func(*session.Session, InterfacesWidgetElem)) {
+	widget.selectedFunc = f
 }
 
 func (widget *InterfacesWidget) SetData(data []*session.Session) {
@@ -80,6 +98,8 @@ func (widget *InterfacesWidget) ResetSelector() {
 }
 
 func (widget *InterfacesWidget) Refresh() {
+	widget.displayData = nil
+
 	headers := []string{"Name", "IP"}
 	for i := 0; i < len(headers); i++ {
 		header := fmt.Sprintf("[::b]%s", strings.ToUpper(headers[i]))
@@ -92,6 +112,10 @@ func (widget *InterfacesWidget) Refresh() {
 			for _, IP := range elem.Addresses {
 				widget.SetCell(rowId, 0, tview.NewTableCell(elem.Name))
 				widget.SetCell(rowId, 1, tview.NewTableCell(IP))
+				widget.displayData = append(widget.displayData, InterfacesWidgetElem{
+					Name:    elem.Name,
+					Address: IP,
+				})
 
 				rowId++
 			}
